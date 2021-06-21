@@ -5,6 +5,8 @@ import org.scalatest.flatspec._
 import org.scalatest.matchers._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
+import java.util.UUID
+
 class CfmmPoolSpec extends AnyFlatSpec with should.Matchers with ScalaCheckPropertyChecks {
 
   it should "support minimal amount swap [X]" in {
@@ -17,6 +19,10 @@ class CfmmPoolSpec extends AnyFlatSpec with should.Matchers with ScalaCheckPrope
             val pool1 = pool0.swap("x", minAmountX)
             pool1.x should be > pool0.x
             pool1.y should be < pool0.y
+            if (conf.fee.feeNum > 0)
+              pool0.x * pool0.y should be > pool1.x * pool1.y
+            else
+              pool0.x * pool0.y should be >= pool1.x * pool1.y
           }
         }
       }
@@ -33,6 +39,10 @@ class CfmmPoolSpec extends AnyFlatSpec with should.Matchers with ScalaCheckPrope
             val pool1 = pool0.swap("y", minAmountY)
             pool1.x should be < pool0.x
             pool1.y should be > pool0.y
+            if (conf.fee.feeNum > 0)
+              pool0.x * pool0.y should be > pool1.x * pool1.y
+            else
+              pool0.x * pool0.y should be >= pool1.x * pool1.y
           }
         }
       }
@@ -50,13 +60,14 @@ class CfmmPoolSpec extends AnyFlatSpec with should.Matchers with ScalaCheckPrope
                 case Deposit(x, y)       => pool.deposit(x, y)
                 case Redeem(lp)          => pool.redeem(lp)
                 case Swap(asset, amount) => pool.swap(asset, amount)
+                case Burn(amount)        => pool.burn(amount)
               }
             }
 
             val poolDepleted = pool.redeem(pool.supplyLP)
             poolDepleted.x should be(0)
             poolDepleted.y should be(0)
-            poolDepleted.lp should be(conf.emissionLP)
+            poolDepleted.supplyLP should be(0)
           }
         }
       }

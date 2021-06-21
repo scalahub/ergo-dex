@@ -4,13 +4,17 @@ import org.scalacheck.Gen
 
 object generators {
 
+  def feeGen: Gen[Fee] =
+    for {
+      denom  <- Gen.oneOf(Seq(10, 100, 1000, 10000))
+      feeNum <- Gen.chooseNum(0, denom - 1)
+    } yield Fee(feeNum, denom)
+
   def cfmmConfGen: Gen[PoolConfig] =
     for {
-      feeNum     <- Gen.chooseNum(501, 999)
-      feeDenom   <- Gen.const(1000)
-      emissionLP <- Gen.const(1000000000000000000L)
-      minDeposit <- Gen.oneOf(Seq(1000, 2000, 10000, 20000))
-    } yield PoolConfig(feeNum, feeDenom, emissionLP, minDeposit)
+      fee        <- feeGen
+      minDeposit <- Gen.oneOf(Seq(1000, 2000, 10000, 20000, 100000, 1000000))
+    } yield PoolConfig(fee, minDeposit)
 
   def initialDepositGen(minDeposit: Long): Gen[(Long, Long)] =
     for {
@@ -35,4 +39,7 @@ object generators {
       asset  <- Gen.oneOf(Seq("x", "y"))
       amount <- Gen.chooseNum[Long](minT = 1L, maxT = Short.MaxValue)
     } yield Swap(asset, amount)
+
+  def burnGen: Gen[Burn] =
+    Gen.chooseNum[Long](minT = 1L, maxT = Short.MaxValue).map(Burn)
 }
